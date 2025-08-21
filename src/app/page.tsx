@@ -1145,18 +1145,21 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Feedback Section */}
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-          <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-            Help Us Improve
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Your feedback helps us make ScholarSumm better for researchers worldwide
-          </p>
-          <button className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors">
-            💬 Send Feedback
-          </button>
-        </div>
+{/* Feedback Section */}
+<div className="bg-white rounded-xl shadow-lg p-8 text-center">
+  <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+    Help Us Improve
+  </h3>
+  <p className="text-gray-600 mb-6">
+    Your feedback helps us make ScholarSumm better for researchers worldwide
+  </p>
+  <Link 
+    href="/feedback" 
+    className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+  >
+    💬 Send Feedback
+  </Link>
+</div>
       </main>
 
       {/* Footer */}
