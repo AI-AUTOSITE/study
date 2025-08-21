@@ -1,12 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase設定（クライアントサイドでも動作するように）
-const supabaseUrl = typeof window !== 'undefined' 
-  ? process.env.NEXT_PUBLIC_SUPABASE_URL! 
-  : '';
-const supabaseAnonKey = typeof window !== 'undefined' 
-  ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! 
-  : '';
+// Supabase設定（環境変数のフォールバック付き）
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://msgprrphijjnunnupqdl.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zZ3BycnBoaWpqbnVubnVwcWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNzk5MzUsImV4cCI6MjA2OTg1NTkzNX0.frPYH__uqsMHApfKh4mhTjMiC56AIDnziPGOwwqq0DE';
+
+// エラーチェック
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase configuration missing:', {
+    url: !!supabaseUrl,
+    key: !!supabaseAnonKey
+  });
+}
+
 // Supabaseクライアントの作成
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -49,7 +54,7 @@ export type MonthlyUsage = {
   credits_used: number;
 };
 
-// getOrCreateUserProfile関数を修正
+// getOrCreateUserProfile関数
 export async function getOrCreateUserProfile(clerkUserId: string, email: string, firstName?: string) {
   try {
     // 既存のプロフィールを確認
