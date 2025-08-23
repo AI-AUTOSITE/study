@@ -3,7 +3,7 @@
 
 import React from 'react';
 import PageLayout from '../components/PageLayout';
-import { Check, X, GraduationCap, Users, Building } from 'lucide-react';
+import { Check, X, GraduationCap, Zap, Building, TrendingUp } from 'lucide-react';
 
 export default function PricingPage() {
   return (
@@ -14,7 +14,7 @@ export default function PricingPage() {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-serif text-gray-900 mb-4">Subscription Plans</h1>
             <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-              Select the appropriate tier based on your academic requirements and institutional needs
+              Select the appropriate tier based on your academic requirements and research needs
             </p>
           </div>
 
@@ -30,12 +30,12 @@ export default function PricingPage() {
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {/* Basic Plan */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-16">
+            {/* Free Plan */}
             <div className="bg-white rounded shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gray-900 text-white p-6">
-                <h3 className="text-2xl font-serif mb-2">Basic</h3>
-                <p className="text-gray-300 text-sm">Individual Researchers</p>
+                <h3 className="text-2xl font-serif mb-2">Free</h3>
+                <p className="text-gray-300 text-sm">Individual Learners</p>
               </div>
               <div className="p-6">
                 <div className="text-center mb-6">
@@ -44,31 +44,31 @@ export default function PricingPage() {
                 </div>
                 
                 <div className="space-y-4 mb-8">
-                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features Include:</h4>
+                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features:</h4>
                   <ul className="space-y-3">
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">3 documents per day</span>
+                      <span className="text-gray-700 text-sm">2 files per day</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Standard summarization</span>
+                      <span className="text-gray-700 text-sm">100 pages per month</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Basic study cards</span>
+                      <span className="text-gray-700 text-sm">10MB max file size</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">PDF & CSV export</span>
+                      <span className="text-gray-700 text-sm">8-12 flashcards</span>
                     </li>
                     <li className="flex items-start">
-                      <X className="h-5 w-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-500">Priority processing</span>
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Basic AI summary</span>
                     </li>
                     <li className="flex items-start">
-                      <X className="h-5 w-5 text-gray-400 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-500">Extended file size limit</span>
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">7-day history</span>
                     </li>
                   </ul>
                 </div>
@@ -82,47 +82,113 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Professional Plan */}
-            <div className="bg-white rounded shadow-lg border-2 border-indigo-600 overflow-hidden relative">
-              <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-sm font-semibold">
-                RECOMMENDED FOR STUDENTS
-              </div>
-              <div className="bg-indigo-900 text-white p-6 mt-7">
-                <h3 className="text-2xl font-serif mb-2">Professional</h3>
-                <p className="text-indigo-200 text-sm">Graduate Students & Faculty</p>
+            {/* Starter Plan */}
+            <div className="bg-white rounded shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-blue-900 text-white p-6">
+                <h3 className="text-2xl font-serif mb-2">Starter</h3>
+                <p className="text-blue-200 text-sm">Students</p>
               </div>
               <div className="p-6">
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-indigo-900">$9.99</div>
+                  <div className="text-4xl font-bold text-blue-900">$4.99</div>
                   <p className="text-gray-600 mt-1">per month</p>
                 </div>
                 
                 <div className="space-y-4 mb-8">
-                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features Include:</h4>
+                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features:</h4>
                   <ul className="space-y-3">
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">100 documents per month</span>
+                      <span className="text-gray-700 text-sm">30 files per month</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Advanced AI analysis</span>
+                      <span className="text-gray-700 text-sm">500 pages per month</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Comprehensive study materials</span>
+                      <span className="text-gray-700 text-sm">15MB max file size</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Priority processing queue</span>
+                      <span className="text-gray-700 text-sm">12-18 flashcards</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Files up to 100MB</span>
+                      <span className="text-gray-700 text-sm">Detailed summaries</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Email support</span>
+                      <span className="text-gray-700 text-sm">30-day history</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Priority support</span>
+                    </li>
+                  </ul>
+                </div>
+                
+                <a 
+                  href="/sign-up"
+                  className="block w-full text-center bg-blue-600 text-white py-3 px-6 rounded hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Start Trial
+                </a>
+              </div>
+            </div>
+
+            {/* Professional Plan */}
+            <div className="bg-white rounded shadow-lg border-2 border-indigo-600 overflow-hidden relative">
+              <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-sm font-semibold">
+                MOST POPULAR
+              </div>
+              <div className="bg-indigo-900 text-white p-6 mt-7">
+                <h3 className="text-2xl font-serif mb-2">Professional</h3>
+                <p className="text-indigo-200 text-sm">Researchers & Faculty</p>
+              </div>
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="text-4xl font-bold text-indigo-900">$14.99</div>
+                  <p className="text-gray-600 mt-1">per month</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    <s>$9.99</s> → $14.99
+                  </p>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features:</h4>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">100 files per month</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">3000 pages per month</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">25MB max file size</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">20-30 flashcards</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">AI-enhanced analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Unlimited history</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Priority processing</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Advanced analytics</span>
                     </li>
                   </ul>
                 </div>
@@ -136,44 +202,53 @@ export default function PricingPage() {
               </div>
             </div>
 
-            {/* Institutional Plan */}
+            {/* Enterprise Plan */}
             <div className="bg-white rounded shadow-lg border border-gray-200 overflow-hidden">
               <div className="bg-gray-900 text-white p-6">
-                <h3 className="text-2xl font-serif mb-2">Institutional</h3>
-                <p className="text-gray-300 text-sm">Universities & Research Labs</p>
+                <h3 className="text-2xl font-serif mb-2">Enterprise</h3>
+                <p className="text-gray-300 text-sm">Institutions & Labs</p>
               </div>
               <div className="p-6">
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-900">Custom</div>
-                  <p className="text-gray-600 mt-1">Contact for pricing</p>
+                  <div className="text-4xl font-bold text-gray-900">$29.99</div>
+                  <p className="text-gray-600 mt-1">per month</p>
+                  <p className="text-sm text-green-600 mt-1">Coming Soon</p>
                 </div>
                 
                 <div className="space-y-4 mb-8">
-                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features Include:</h4>
+                  <h4 className="font-semibold text-gray-900 uppercase text-sm tracking-wide">Features:</h4>
                   <ul className="space-y-3">
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Unlimited documents</span>
+                      <span className="text-gray-700 text-sm">Unlimited files</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Multi-user access</span>
+                      <span className="text-gray-700 text-sm">10,000 pages/month</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">API integration</span>
+                      <span className="text-gray-700 text-sm">50MB max file size</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Custom workflows</span>
+                      <span className="text-gray-700 text-sm">30-40 flashcards</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">Dedicated support</span>
+                      <span className="text-gray-700 text-sm">Premium AI (Opus)</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">FERPA compliant</span>
+                      <span className="text-gray-700 text-sm">API access</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Team collaboration</span>
+                    </li>
+                    <li className="flex items-start">
+                      <Check className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">Dedicated support</span>
                     </li>
                   </ul>
                 </div>
@@ -198,46 +273,74 @@ export default function PricingPage() {
                 <thead className="bg-gray-50 border-b">
                   <tr>
                     <th className="text-left px-6 py-4 font-semibold text-gray-900">Feature</th>
-                    <th className="text-center px-6 py-4 font-semibold text-gray-900">Basic</th>
+                    <th className="text-center px-6 py-4 font-semibold text-gray-900">Free</th>
+                    <th className="text-center px-6 py-4 font-semibold text-gray-900">Starter</th>
                     <th className="text-center px-6 py-4 font-semibold text-gray-900">Professional</th>
-                    <th className="text-center px-6 py-4 font-semibold text-gray-900">Institutional</th>
+                    <th className="text-center px-6 py-4 font-semibold text-gray-900">Enterprise</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   <tr>
-                    <td className="px-6 py-4 text-gray-700">Document Processing Limit</td>
-                    <td className="text-center px-6 py-4">3/day</td>
+                    <td className="px-6 py-4 text-gray-700">Monthly Price</td>
+                    <td className="text-center px-6 py-4 font-bold">$0</td>
+                    <td className="text-center px-6 py-4 font-bold text-blue-600">$4.99</td>
+                    <td className="text-center px-6 py-4 font-bold text-indigo-600">$14.99</td>
+                    <td className="text-center px-6 py-4 font-bold">$29.99</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-6 py-4 text-gray-700">File Processing Limit</td>
+                    <td className="text-center px-6 py-4">2/day</td>
+                    <td className="text-center px-6 py-4">30/month</td>
                     <td className="text-center px-6 py-4">100/month</td>
                     <td className="text-center px-6 py-4">Unlimited</td>
                   </tr>
+                  <tr>
+                    <td className="px-6 py-4 text-gray-700">Page Limit</td>
+                    <td className="text-center px-6 py-4">100/month</td>
+                    <td className="text-center px-6 py-4">500/month</td>
+                    <td className="text-center px-6 py-4">3000/month</td>
+                    <td className="text-center px-6 py-4">10,000/month</td>
+                  </tr>
                   <tr className="bg-gray-50">
                     <td className="px-6 py-4 text-gray-700">Maximum File Size</td>
+                    <td className="text-center px-6 py-4">10MB</td>
+                    <td className="text-center px-6 py-4">15MB</td>
+                    <td className="text-center px-6 py-4">25MB</td>
                     <td className="text-center px-6 py-4">50MB</td>
-                    <td className="text-center px-6 py-4">100MB</td>
-                    <td className="text-center px-6 py-4">Custom</td>
+                  </tr>
+                  <tr>
+                    <td className="px-6 py-4 text-gray-700">Flashcards per Document</td>
+                    <td className="text-center px-6 py-4">8-12</td>
+                    <td className="text-center px-6 py-4">12-18</td>
+                    <td className="text-center px-6 py-4">20-30</td>
+                    <td className="text-center px-6 py-4">30-40</td>
+                  </tr>
+                  <tr className="bg-gray-50">
+                    <td className="px-6 py-4 text-gray-700">AI Model</td>
+                    <td className="text-center px-6 py-4">Haiku (Fast)</td>
+                    <td className="text-center px-6 py-4">Haiku/Sonnet</td>
+                    <td className="text-center px-6 py-4">Sonnet (Advanced)</td>
+                    <td className="text-center px-6 py-4">Opus (Premium)</td>
                   </tr>
                   <tr>
                     <td className="px-6 py-4 text-gray-700">Processing Speed</td>
+                    <td className="text-center px-6 py-4">Standard</td>
                     <td className="text-center px-6 py-4">Standard</td>
                     <td className="text-center px-6 py-4">Priority</td>
                     <td className="text-center px-6 py-4">Dedicated</td>
                   </tr>
                   <tr className="bg-gray-50">
-                    <td className="px-6 py-4 text-gray-700">Study Card Generation</td>
-                    <td className="text-center px-6 py-4">Basic</td>
-                    <td className="text-center px-6 py-4">Advanced</td>
-                    <td className="text-center px-6 py-4">Custom</td>
+                    <td className="px-6 py-4 text-gray-700">History Retention</td>
+                    <td className="text-center px-6 py-4">7 days</td>
+                    <td className="text-center px-6 py-4">30 days</td>
+                    <td className="text-center px-6 py-4">Unlimited</td>
+                    <td className="text-center px-6 py-4">Unlimited</td>
                   </tr>
                   <tr>
-                    <td className="px-6 py-4 text-gray-700">Export Formats</td>
-                    <td className="text-center px-6 py-4">PDF, CSV</td>
-                    <td className="text-center px-6 py-4">PDF, CSV, JSON</td>
-                    <td className="text-center px-6 py-4">All + Custom</td>
-                  </tr>
-                  <tr className="bg-gray-50">
                     <td className="px-6 py-4 text-gray-700">Support Level</td>
                     <td className="text-center px-6 py-4">Community</td>
-                    <td className="text-center px-6 py-4">Email</td>
+                    <td className="text-center px-6 py-4">Email (48h)</td>
+                    <td className="text-center px-6 py-4">Priority (24h)</td>
                     <td className="text-center px-6 py-4">Dedicated</td>
                   </tr>
                 </tbody>
@@ -245,36 +348,50 @@ export default function PricingPage() {
             </div>
           </div>
 
+          {/* Important Notice */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-12">
+            <div className="flex items-start">
+              <TrendingUp className="h-6 w-6 text-yellow-600 mr-3 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Pricing Update Notice</h3>
+                <p className="text-gray-700">
+                  To ensure sustainable service and continued improvements, Professional plan pricing has been 
+                  adjusted from $9.99 to $14.99 per month. New Starter plan added at $4.99 for budget-conscious students.
+                </p>
+              </div>
+            </div>
+          </div>
+          
           {/* FAQ Section */}
           <div className="bg-white rounded shadow-lg p-8">
             <h2 className="text-3xl font-serif text-gray-900 text-center mb-8">Frequently Asked Questions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">What happens if I exceed my page limit?</h3>
+                <p className="text-gray-700 leading-relaxed">
+                  When you reach your monthly page limit, you can still process documents up to your remaining 
+                  pages. The system will process partial documents and notify you about the coverage percentage.
+                </p>
+              </div>
+              <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Can I change plans at any time?</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  Yes, you may upgrade or downgrade your subscription at any time. Changes take effect 
-                  at the beginning of your next billing cycle. Prorated adjustments are available for upgrades.
+                  Yes, you can upgrade or downgrade at any time. Changes take effect immediately for upgrades, 
+                  and at the next billing cycle for downgrades.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">What document formats are supported?</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Is there a free trial for paid plans?</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  ScholarSumm currently supports PDF and DOCX formats. These cover the majority of 
-                  academic publications and institutional documents.
+                  Yes! All paid plans come with a 7-day free trial. You can cancel anytime during the trial 
+                  period without being charged.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Is there a trial period available?</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">How is the page count calculated?</h3>
                 <p className="text-gray-700 leading-relaxed">
-                  The Basic plan provides perpetual free access with daily limits. Professional plan 
-                  subscribers receive a 7-day trial period with full refund if cancelled.
-                </p>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">How is data security ensured?</h3>
-                <p className="text-gray-700 leading-relaxed">
-                  We implement enterprise-grade security protocols including 256-bit SSL encryption, 
-                  FERPA compliance for institutional users, and immediate deletion of processed documents.
+                  For PDFs, we count actual pages. For DOCX files, we estimate pages based on character count 
+                  (approximately 3000 characters per page).
                 </p>
               </div>
             </div>

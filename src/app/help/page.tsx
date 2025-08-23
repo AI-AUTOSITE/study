@@ -69,7 +69,7 @@ export default function HelpPage() {
                     <div className="bg-gray-50 rounded p-3">
                       <p className="text-sm text-gray-600">
                         <strong>Supported formats:</strong> PDF, DOCX<br />
-                        <strong>Maximum file size:</strong> 50MB<br />
+                        <strong>Maximum file size:</strong> 10MB (Free) / 25MB (Pro) <br />
                         <strong>Best results with:</strong> Text-based documents with clear structure
                       </p>
                     </div>
@@ -219,7 +219,7 @@ export default function HelpPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">What's the difference between free and premium?</h3>
                   <p className="text-gray-600">
-                    Free users can process up to 5 documents per month. Premium users get unlimited processing, 
+                    Free users can process up to  3/day (Free) / 100/month (Pro) documents per month. Premium users get unlimited processing, 
                     advanced features, and priority support. See our <a href="/pricing" className="text-blue-600 hover:text-blue-700">Pricing</a> page.
                   </p>
                 </div>

@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:prod": "NODE_ENV=production next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "local": "NODE_ENV=development next dev",
+    "local:prod": "NODE_ENV=production next dev",
+    "clean": "rm -rf .next node_modules/.cache"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
@@ -16,7 +20,11 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.536.0",
+    "mammoth": "^1.10.0",
     "next": "15.4.5",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.4.54",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-dropzone": "^14.3.8",
@@ -25,6 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",

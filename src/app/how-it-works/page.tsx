@@ -55,21 +55,21 @@ export default function HowItWorksPage() {
                   Our secure upload infrastructure ensures data integrity and confidentiality.
                 </p>
                 <div className="bg-gray-50 border border-gray-200 rounded p-4">
-                  <h4 className="font-semibold text-gray-900 mb-3">Technical Specifications:</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start">
-                      <span className="text-indigo-600 mr-2">•</span>
-                      <span className="text-gray-700">Supported formats: PDF, DOCX</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-indigo-600 mr-2">•</span>
-                      <span className="text-gray-700">Maximum file size: 50MB (standard), 100MB (premium)</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-indigo-600 mr-2">•</span>
-                      <span className="text-gray-700">256-bit SSL encryption during transfer</span>
-                    </li>
-                  </ul>
+<h4 className="font-semibold text-gray-900 mb-3">Technical Specifications:</h4>
+<ul className="space-y-2">
+  <li className="flex items-start">
+    <span className="text-indigo-600 mr-2">•</span>
+    <span className="text-gray-700">Supported formats: PDF, DOCX</span>
+  </li>
+  <li className="flex items-start">
+    <span className="text-indigo-600 mr-2">•</span>
+    <span className="text-gray-700">Maximum file size: 10MB (Basic), 25MB (Professional)</span>
+  </li>
+  <li className="flex items-start">
+    <span className="text-indigo-600 mr-2">•</span>
+    <span className="text-gray-700">Typical document: 30-150 pages depending on plan</span>
+  </li>
+</ul>
                 </div>
               </div>
               <div className="order-1 lg:order-2">

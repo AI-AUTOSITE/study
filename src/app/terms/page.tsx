@@ -130,17 +130,17 @@ export default function TermsPage() {
               </section>
 
               {/* 制限事項 */}
-              <section className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Service Limitations</h2>
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <ul className="space-y-2 text-gray-600">
-                    <li>• Maximum file size: 50MB per document</li>
-                    <li>• Supported formats: PDF, DOCX</li>
-                    <li>• Processing limits based on subscription tier</li>
-                    <li>• Service availability: 99.9% uptime target</li>
-                  </ul>
-                </div>
-              </section>
+<section className="mb-8">
+  <h2 className="text-2xl font-semibold text-gray-900 mb-4">6. Service Limitations</h2>
+  <div className="border border-gray-200 rounded-lg p-4">
+    <ul className="space-y-2 text-gray-600">
+      <li>• Maximum file size: 10MB (Free), 25MB (Pro)</li>
+      <li>• Supported formats: PDF, DOCX</li>
+      <li>• Processing limits: 3/day (Free), 100/month (Pro)</li>
+      <li>• Service availability: 99.9% uptime target</li>
+    </ul>
+  </div>
+</section>
 
               {/* 免責事項 */}
               <section className="mb-8">

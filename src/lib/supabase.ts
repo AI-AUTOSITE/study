@@ -16,15 +16,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // データベースの型定義
-export type UserProfile = {
+export interface UserProfile {
   id: string;
   clerk_user_id: string;
   email: string;
-  first_name?: string;
-  subscription_status: 'free' | 'pro';
+  subscription_status: string;  // 'inactive' | 'active' | 'free' など
+  subscription_tier: string;    // 'free' | 'starter' | 'pro' | 'enterprise'
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
   created_at: string;
   updated_at: string;
-};
+}
 
 export type ProcessingHistory = {
   id: string;
@@ -54,109 +56,78 @@ export type MonthlyUsage = {
   credits_used: number;
 };
 
-// getOrCreateUserProfile関数
-export async function getOrCreateUserProfile(clerkUserId: string, email: string, firstName?: string) {
+// src/lib/supabase.ts の getOrCreateUserProfile 関数を修正
+
+export async function getOrCreateUserProfile(
+  clerkUserId: string,
+  email: string,
+  firstName?: string
+): Promise<{ data: UserProfile | null; error: any }> {
   try {
-    // 既存のプロフィールを確認
+    // まず既存のプロファイルを確認
     const { data: existingProfile, error: fetchError } = await supabase
-      .from('user_profiles')
+      .from('users')
       .select('*')
       .eq('clerk_user_id', clerkUserId)
       .single();
 
-    // エラーがPGRST116（レコードなし）以外の場合はエラーを投げる
     if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('Error fetching profile:', fetchError);
-      throw fetchError;
+      return { data: null, error: fetchError };
     }
 
     if (existingProfile) {
       return { data: existingProfile, error: null };
     }
 
-    // 新規作成
-    const { data: newProfile, error: createError } = await supabase
-      .from('user_profiles')
+    // プロファイルが存在しない場合は新規作成
+    // 注意: first_name カラムが存在しない可能性があるので削除
+    const { data: newProfile, error: insertError } = await supabase
+      .from('users')
       .insert({
         clerk_user_id: clerkUserId,
-        email,
-        first_name: firstName || null,
-        subscription_status: 'free',
+        email: email,
+        subscription_status: 'inactive',  // デフォルト値を'inactive'に
+        subscription_tier: 'free',
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .select()
       .single();
 
-    if (createError) {
-      console.error('Error creating profile:', createError);
-      throw createError;
+    if (insertError) {
+      console.error('Error creating profile:', insertError);
+      console.error('Insert data:', {
+        clerk_user_id: clerkUserId,
+        email: email,
+      });
+      return { data: null, error: insertError };
     }
 
     return { data: newProfile, error: null };
   } catch (error) {
-    console.error('Profile creation error:', error);
+    console.error('Unexpected error in getOrCreateUserProfile:', error);
     return { data: null, error };
   }
 }
-
 // 日次使用量の取得・更新
 export async function getDailyUsage(userId: string) {
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  
   const { data, error } = await supabase
     .from('daily_usage')
     .select('*')
-    .eq('user_id', userId)
-    .eq('date', today)
+    .eq('clerk_user_id', userId)  // ← user_id ではなく clerk_user_id
     .single();
-
-  if (error && error.code === 'PGRST116') {
-    // レコードが存在しない場合は作成
-    const { data: newData, error: createError } = await supabase
-      .from('daily_usage')
-      .insert({
-        user_id: userId,
-        date: today,
-        files_processed: 0,
-        credits_used: 0
-      })
-      .select()
-      .single();
-    
-    return { data: newData, error: createError };
-  }
-
+  
   return { data, error };
 }
 
-// 月次使用量の取得・更新
 export async function getMonthlyUsage(userId: string) {
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-  
   const { data, error } = await supabase
     .from('monthly_usage')
     .select('*')
-    .eq('user_id', userId)
-    .eq('month', currentMonth)
+    .eq('clerk_user_id', userId)  // ← user_id ではなく clerk_user_id
     .single();
-
-  if (error && error.code === 'PGRST116') {
-    // レコードが存在しない場合は作成
-    const { data: newData, error: createError } = await supabase
-      .from('monthly_usage')
-      .insert({
-        user_id: userId,
-        month: currentMonth,
-        files_processed: 0,
-        credits_used: 0
-      })
-      .select()
-      .single();
-    
-    return { data: newData, error: createError };
-  }
-
+  
   return { data, error };
 }
 
@@ -206,17 +177,26 @@ export async function saveProcessingHistory(data: Omit<ProcessingHistory, 'id' |
 }
 
 // 処理履歴を取得
-export async function getProcessingHistory(userId: string, limit: number = 10) {
-  const { data, error } = await supabase
-    .from('processing_history')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-
-  return { data, error };
+export async function getProcessingHistory(userId: string, limit = 10) {
+  try {
+    const { data, error } = await supabase
+      .from('processing_history')
+      .select('*')
+      .eq('clerk_user_id', userId)  // ← user_id ではなく clerk_user_id
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    
+    if (error) {
+      console.error('Error fetching processing history:', error);
+      return { data: null, error };
+    }
+    
+    return { data, error: null };
+  } catch (error) {
+    console.error('Unexpected error in getProcessingHistory:', error);
+    return { data: null, error };
+  }
 }
-
 // サブスクリプション状態を更新
 export async function updateSubscriptionStatus(userId: string, status: 'free' | 'pro') {
   const { data, error } = await supabase

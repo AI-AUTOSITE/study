@@ -18,7 +18,12 @@ const merriweather = Merriweather({
   display: 'swap',
 })
 
+// layout.tsx の metadata 部分を以下に置き換え（20-68行目）
+
 export const metadata: Metadata = {
+  // 本番URLに修正
+  metadataBase: new URL('https://study.ai-autosite.com'),
+  
   title: {
     default: 'ScholarSumm - Academic Document Analysis & Study Tools',
     template: '%s | ScholarSumm'
@@ -51,13 +56,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://scholarsumm.com',
+    url: 'https://study.ai-autosite.com',  // 実際のURLに修正
     siteName: 'ScholarSumm',
     title: 'ScholarSumm - Academic Document Analysis & Study Tools',
     description: 'Transform research papers into comprehensive study materials using advanced AI technology.',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://study.ai-autosite.com/og-image.png',  // 絶対URLに修正
         width: 1200,
         height: 630,
         alt: 'ScholarSumm - Academic Research Assistant',
@@ -68,7 +73,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ScholarSumm - Academic Document Analysis',
     description: 'Transform research papers into study materials with AI',
-    images: ['/twitter-image.png'],
+    images: ['https://study.ai-autosite.com/twitter-image.png'],  // 絶対URLに修正
     creator: '@scholarsumm',
   },
   icons: {

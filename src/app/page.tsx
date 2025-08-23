@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { Upload, FileText, Zap, Star, Menu, X, AlertTriangle } from 'lucide-react';
+import { Upload, FileText, Zap, Star, Menu, X, AlertTriangle, FileCheck, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useUser, useClerk } from '@clerk/nextjs';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { 
   supabase, 
   getOrCreateUserProfile, 
@@ -15,6 +16,135 @@ import {
   type UserProfile
 } from '@/lib/supabase';
 
+// HistoryItem Component
+const HistoryItem = ({ 
+  item, 
+  downloadHistoryPDF, 
+  downloadHistoryCards, 
+  setResults 
+}: {
+  item: any;
+  downloadHistoryPDF: (item: any) => void;
+  downloadHistoryCards: (item: any) => void;
+  setResults: (results: any) => void;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <div className="border rounded-lg overflow-hidden">
+      <div 
+        className="p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex justify-between items-center">
+          <div className="flex-1">
+            <p className="font-medium text-gray-800">{item.file_name}</p>
+            <p className="text-sm text-gray-600">
+              {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
+            </p>
+            {item.partial_processing && (
+              <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded mt-1 inline-block">
+                Partial: {item.pages_processed}/{item.page_count} pages
+              </span>
+            )}
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-500">
+              {(item.file_size / 1024 / 1024).toFixed(2)} MB
+            </span>
+            <button className="text-gray-400 hover:text-gray-600">
+              {isExpanded ? (
+                <ChevronUp className="h-5 w-5" />
+              ) : (
+                <ChevronDown className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      {isExpanded && (
+        <div className="p-4 bg-white border-t">
+          <div className="mb-4">
+            <h4 className="font-semibold text-gray-800 mb-2">📝 Summary</h4>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {item.summary_text || 'No summary available'}
+            </p>
+          </div>
+          
+          {item.flashcard_data && item.flashcard_data.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-semibold text-gray-800 mb-2">
+                🎯 Study Cards ({item.flashcard_data.length} cards)
+              </h4>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {item.flashcard_data.slice(0, 3).map((card: any, cardIndex: number) => (
+                  <div key={cardIndex} className="bg-gray-50 rounded p-3">
+                    <p className="text-sm font-medium text-gray-700 mb-1">
+                      Q: {card.front}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      A: {card.back}
+                    </p>
+                  </div>
+                ))}
+                {item.flashcard_data.length > 3 && (
+                  <p className="text-sm text-gray-500 italic">
+                    +{item.flashcard_data.length - 3} more cards...
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex space-x-3">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadHistoryPDF(item);
+              }}
+              className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm"
+            >
+              📄 Download Summary
+            </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadHistoryCards(item);
+              }}
+              className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors text-sm"
+            >
+              📚 Download Cards
+            </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setResults({
+                  fileName: item.file_name,
+                  summary: item.summary_text,
+                  flashcards: item.flashcard_data,
+                  originalLength: item.file_size,
+                  processingDetails: {
+                    totalPages: item.page_count,
+                    pagesProcessed: item.pages_processed,
+                    partialProcessing: item.partial_processing,
+                    coverage: item.pages_processed && item.page_count 
+                      ? `${Math.round((item.pages_processed / item.page_count) * 100)}%`
+                      : '100%'
+                  }
+                });
+              }}
+              className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+            >
+              👁️ View Full
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function HomePage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
@@ -22,27 +152,32 @@ export default function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<string>('');
   const [results, setResults] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // フラッシュカード用の状態
+  // Flashcard states
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [studyMode, setStudyMode] = useState(false);
   const [cardStats, setCardStats] = useState<{[key: number]: 'easy' | 'medium' | 'hard' | null}>({});
 
-  // Supabase関連の状態
+  // Supabase states
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [processingHistory, setProcessingHistory] = useState<any[]>([]);
   const [dailyUsage, setDailyUsage] = useState({ files_processed: 0, credits_used: 0 });
   const [monthlyUsage, setMonthlyUsage] = useState({ files_processed: 0, credits_used: 0 });
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   
-  // ハイドレーション対応の状態
+  // NEW: Page tracking states
+  const [monthlyPages, setMonthlyPages] = useState(0);
+  const [remainingPages, setRemainingPages] = useState<number | null>(null);
+  
+  // Hydration states
   const [canProcessState, setCanProcessState] = useState(true);
   const [isClientSide, setIsClientSide] = useState(false);
 
-  // ユーザープロフィール初期化（Supabase版）
+  // Initialize user profile
   const initializeUserProfile = async (clerkUserId: string, email: string, firstName?: string) => {
     setIsLoadingProfile(true);
     
@@ -57,9 +192,8 @@ export default function HomePage() {
       
       setUserProfile(profile);
       
-      // 使用量を取得
       if (profile) {
-        // 日次使用量（無料ユーザー）
+        // Get usage data
         if (profile.subscription_status === 'free') {
           const { data: dailyData } = await getDailyUsage(profile.id);
           if (dailyData) {
@@ -70,7 +204,6 @@ export default function HomePage() {
           }
         }
         
-        // 月次使用量（Proユーザー）
         if (profile.subscription_status === 'pro') {
           const { data: monthlyData } = await getMonthlyUsage(profile.id);
           if (monthlyData) {
@@ -81,21 +214,42 @@ export default function HomePage() {
           }
         }
         
-        // 処理履歴を取得
-        const { data: history } = await getProcessingHistory(profile.id);
-        if (history) {
-          setProcessingHistory(history);
+        // NEW: Get page usage from user_usage table
+        const { data: usageData } = await supabase
+          .from('user_usage')
+          .select('pages_processed_month')
+          .eq('clerk_user_id', clerkUserId)
+          .single();
+          
+        if (usageData) {
+          setMonthlyPages(usageData.pages_processed_month || 0);
+          
+          // Calculate remaining pages based on plan
+          const planLimits = {
+            free: 100,
+            starter: 500,
+            pro: 3000,
+            enterprise: 10000
+          };
+          
+          const limit = planLimits[profile.subscription_status as keyof typeof planLimits] || 100;
+          setRemainingPages(Math.max(0, limit - (usageData.pages_processed_month || 0)));
         }
+        
+        // Get processing history
+      const { data: history } = await getProcessingHistory(clerkUserId);  // ← ここだけ変更！
+      if (history) {
+        setProcessingHistory(history);
       }
-    } catch (error) {
-      console.error('Error initializing profile:', error);
-      setError('Failed to initialize user profile.');
-    } finally {
-      setIsLoadingProfile(false);
     }
-  };
+  } catch (error) {
+    console.error('Error initializing profile:', error);
+    setError('Failed to initialize user profile.');
+  } finally {
+    setIsLoadingProfile(false);
+  }
+};
 
-  // サインイン時にプロフィール初期化
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
       initializeUserProfile(
@@ -106,19 +260,18 @@ export default function HomePage() {
     }
   }, [isLoaded, isSignedIn, user]);
 
-  // クライアントサイド初期化
   useEffect(() => {
     setIsClientSide(true);
   }, []);
 
-  // 制限チェック用のuseEffect
+  // Check processing limits
   useEffect(() => {
     if (!isClientSide) return;
     
     const checkProcessLimit = async () => {
       if (!isLoaded) return false;
       
-      // ゲストユーザー（1日1ファイル）
+      // Guest users (2 files per day for free plan)
       if (!isSignedIn) {
         try {
           const today = new Date().toDateString();
@@ -129,7 +282,7 @@ export default function HomePage() {
             localStorage.setItem('dailyGuestCount', '0');
             return true;
           }
-          return guestCount < 1;
+          return guestCount < 2; // Updated to 2 files per day
         } catch (error) {
           return true;
         }
@@ -137,28 +290,34 @@ export default function HomePage() {
       
       if (!userProfile) return false;
       
-      // Proユーザー（月100ファイル）
-      if (userProfile.subscription_status === 'pro') {
-        return monthlyUsage.files_processed < 100;
+      // Check page limits
+      if (remainingPages !== null && remainingPages <= 0) {
+        return false;
       }
       
-      // 無料ユーザー（1日3ファイル）
-      return dailyUsage.files_processed < 3;
+      // Check file limits
+      if (userProfile.subscription_status === 'pro') {
+        return monthlyUsage.files_processed < 100;
+      } else if (userProfile.subscription_status === 'starter') {
+        return monthlyUsage.files_processed < 30;
+      }
+      
+      // Free users: 2 files per day
+      return dailyUsage.files_processed < 2;
     };
     
     checkProcessLimit().then(setCanProcessState);
-  }, [isClientSide, isLoaded, isSignedIn, userProfile, dailyUsage, monthlyUsage]);
+  }, [isClientSide, isLoaded, isSignedIn, userProfile, dailyUsage, monthlyUsage, remainingPages]);
 
-  // 利用制限チェック（ハイドレーション対応）
   const canProcess = () => {
-    if (!isClientSide) return true; // サーバーサイドでは常にtrue
+    if (!isClientSide) return true;
     return canProcessState;
   };
 
   const updateUsageCount = async () => {
-    if (!isClientSide) return; // サーバーサイドでは何もしない
+    if (!isClientSide) return;
     
-    // ゲストユーザー
+    // Guest users
     if (!isSignedIn) {
       try {
         const today = new Date().toDateString();
@@ -169,13 +328,12 @@ export default function HomePage() {
         console.log('localStorage not available:', error);
       }
     } 
-    // ログインユーザー
+    // Logged in users
     else if (userProfile) {
       try {
-        // Supabaseで使用量を更新
         const { error } = await incrementUsage(
           userProfile.id, 
-          userProfile.subscription_status === 'pro'
+          userProfile.subscription_status === 'pro' || userProfile.subscription_status === 'starter'
         );
         
         if (error) {
@@ -183,8 +341,8 @@ export default function HomePage() {
           return;
         }
         
-        // ローカル状態を更新
-        if (userProfile.subscription_status === 'pro') {
+        // Update local state
+        if (userProfile.subscription_status === 'pro' || userProfile.subscription_status === 'starter') {
           setMonthlyUsage(prev => ({
             files_processed: prev.files_processed + 1,
             credits_used: prev.credits_used + 1
@@ -200,7 +358,7 @@ export default function HomePage() {
       }
     }
     
-    // 制限状態を再チェック
+    // Re-check limits
     const checkProcessLimit = async () => {
       if (!isLoaded) return false;
       
@@ -213,7 +371,7 @@ export default function HomePage() {
           if (lastUsed !== today) {
             return true;
           }
-          return guestCount < 1;
+          return guestCount < 2;
         } catch (error) {
           return true;
         }
@@ -221,11 +379,17 @@ export default function HomePage() {
       
       if (!userProfile) return false;
       
-      if (userProfile.subscription_status === 'pro') {
-        return monthlyUsage.files_processed < 100;
+      if (remainingPages !== null && remainingPages <= 0) {
+        return false;
       }
       
-      return dailyUsage.files_processed < 3;
+      if (userProfile.subscription_status === 'pro') {
+        return monthlyUsage.files_processed < 100;
+      } else if (userProfile.subscription_status === 'starter') {
+        return monthlyUsage.files_processed < 30;
+      }
+      
+      return dailyUsage.files_processed < 2;
     };
     
     const canStillProcess = await checkProcessLimit();
@@ -233,15 +397,20 @@ export default function HomePage() {
   };
 
   // Stripe Checkout
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (plan: 'starter' | 'pro' = 'pro') => {
     try {
+      const priceIds = {
+        starter: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || "price_starter",
+        pro: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || "price_1Rs3MoGSxhYhM1Axrn21fcgc"
+      };
+      
       const response = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          priceId: "price_1Rs3MoGSxhYhM1Axrn21fcgc",
+          priceId: priceIds[plan],
           userId: userProfile?.id,
           clerkUserId: user?.id,
         }),
@@ -281,18 +450,30 @@ export default function HomePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // ファイル検証
-      const maxSize = 50 * 1024 * 1024; // 50MB（Proユーザーは100MB）
-      const maxSizeForUser = userProfile?.subscription_status === 'pro' ? 100 * 1024 * 1024 : maxSize;
+      // File validation
+      const getMaxFileSize = () => {
+        if (!userProfile) return 10 * 1024 * 1024; // Default 10MB
+        
+        const limits: { [key: string]: number } = {
+          free: 10 * 1024 * 1024,     // 10MB
+          starter: 15 * 1024 * 1024,  // 15MB
+          pro: 25 * 1024 * 1024,      // 25MB
+          enterprise: 50 * 1024 * 1024 // 50MB
+        };
+        
+        return limits[userProfile.subscription_status] || limits.free;
+      };
+      
+      const maxSizeForUser = getMaxFileSize();
       const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       
       if (file.size > maxSizeForUser) {
-        setError(`File too large! Maximum size is ${maxSizeForUser / 1024 / 1024}MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
+        setError(`File too large! Maximum size is ${maxSizeForUser / 1024 / 1024}MB for your plan. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.`);
         return;
       }
       
       if (!allowedTypes.includes(file.type)) {
-        setError(`Unsupported file type! Please upload PDF or DOCX files only. Your file type: ${file.type}`);
+        setError(`Unsupported file type! Please upload PDF or DOCX files only.`);
         return;
       }
       
@@ -305,22 +486,27 @@ export default function HomePage() {
   const processFile = async () => {
     if (!uploadedFile) return;
 
-    // 利用制限チェック
+    // Check limits
     if (!canProcess()) {
       if (!isSignedIn) {
-        setError('Daily limit reached. Please sign in for more processing!');
+        setError('Daily limit reached (2 files/day). Please sign in for more processing!');
+      } else if (remainingPages !== null && remainingPages <= 0) {
+        setError('Monthly page limit reached. Please upgrade your plan or wait until next month.');
       } else if (userProfile?.subscription_status === 'pro') {
-        setError('Monthly limit reached. Please wait until next month.');
+        setError('Monthly file limit reached (100 files). Please wait until next month.');
+      } else if (userProfile?.subscription_status === 'starter') {
+        setError('Monthly limit reached. Please upgrade to Pro for more processing!');
       } else {
-        setError('Daily limit reached. Upgrade to Pro for more processing!');
+        setError('Daily limit reached (2 files). Upgrade for more processing!');
       }
       return;
     }
 
     setIsProcessing(true);
     setError(null);
+    setProcessingStatus('Uploading file...');
 
-    // ネットワーク接続チェック
+    // Network check
     if (typeof window !== 'undefined' && !navigator.onLine) {
       setError('No internet connection. Please check your network and try again.');
       setIsProcessing(false);
@@ -331,13 +517,22 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append('file', uploadedFile);
 
-      // タイムアウト付きfetch
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2分タイムアウト
+      // Add processing strategy if pages are limited
+      if (remainingPages !== null && remainingPages < 100) {
+        formData.append('strategy', 'intelligent');
+      }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+      setProcessingStatus('Processing document...');
+      
       const response = await fetch('/api/process', {
         method: 'POST',
         body: formData,
+        headers: {
+          'X-Subscription-Status': userProfile?.subscription_status || 'free'
+        },
         signal: controller.signal,
       });
 
@@ -374,35 +569,72 @@ export default function HomePage() {
       setResults(data.results);
       await updateUsageCount();
       
-      // 処理結果をSupabaseに保存
+      // Update page count if provided
+      if (data.results.processingDetails?.pagesProcessed) {
+        setMonthlyPages(prev => prev + data.results.processingDetails.pagesProcessed);
+        if (remainingPages !== null) {
+          setRemainingPages(prev => Math.max(0, (prev || 0) - data.results.processingDetails.pagesProcessed));
+        }
+      }
+      
+// Option 1: API経由で保存する（推奨）
+// Save to history
       if (userProfile && data.results) {
         try {
-          await saveProcessingHistory({
-            user_id: userProfile.id,
-            file_name: uploadedFile.name,
-            file_size: uploadedFile.size,
-            file_type: uploadedFile.type,
-            summary_text: data.results.summary,
-            flashcard_data: data.results.flashcards,
-            credits_used: 1
-          });
-          
-          // 履歴を再取得
+          // route.ts で既に saveProcessingHistory が呼ばれているので、
+          // ここでは履歴を再取得するだけでOK
           const { data: history } = await getProcessingHistory(userProfile.id);
           if (history) {
             setProcessingHistory(history);
           }
         } catch (historyError) {
-          console.error('Error saving processing history:', historyError);
-          // 履歴保存エラーは処理続行
+          console.error('Error refreshing history:', historyError);
         }
       }
+
+// Option 2: もし別途履歴保存用のAPIエンドポイントがある場合
+// Save to history
+if (userProfile && data.results) {
+  try {
+    const response = await fetch('/api/history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: userProfile.id,
+        fileName: uploadedFile.name,
+        fileSize: uploadedFile.size,
+        pageCount: data.results.processingDetails?.totalPages || 0,
+        summary: data.results.summary,
+        flashcards: data.results.flashcards,
+        processingDetails: {
+          model: data.results.processingDetails?.model,
+          processedChars: data.results.processingDetails?.extractedChars,
+          partialProcessing: data.results.processingDetails?.partialProcessing,
+          pagesProcessed: data.results.processingDetails?.pagesProcessed,
+        }
+      }),
+    });
+    
+    if (response.ok) {
+      // Refresh history
+      const { data: history } = await getProcessingHistory(userProfile.id);
+      if (history) {
+        setProcessingHistory(history);
+      }
+    }
+  } catch (historyError) {
+    console.error('Error saving processing history:', historyError);
+  }
+}
       
-      // フラッシュカード関連の状態をリセット
+      // Reset flashcard states
       setCurrentCardIndex(0);
       setShowAnswer(false);
       setStudyMode(false);
       setCardStats({});
+      setProcessingStatus('');
       
     } catch (err) {
       console.error('Process error:', err);
@@ -420,10 +652,11 @@ export default function HomePage() {
       }
     } finally {
       setIsProcessing(false);
+      setProcessingStatus('');
     }
   };
 
-  // フラッシュカード操作関数
+  // Flashcard functions
   const startStudyMode = () => {
     setStudyMode(true);
     setCurrentCardIndex(0);
@@ -450,7 +683,6 @@ export default function HomePage() {
       [currentCardIndex]: difficulty
     }));
     
-    // 自動的に次のカードに進む
     setTimeout(() => {
       if (currentCardIndex < results.flashcards.length - 1) {
         nextCard();
@@ -464,12 +696,11 @@ export default function HomePage() {
     setCardStats({});
   };
 
-  // ダウンロード機能
+  // Download functions
   const downloadSummaryPDF = async () => {
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF();
     
-    // PDF設定
     doc.setFontSize(20);
     doc.text('Document Summary', 20, 30);
     
@@ -477,16 +708,19 @@ export default function HomePage() {
     doc.text(`File: ${results.fileName}`, 20, 50);
     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 60);
     
-    // 要約を追加
+    if (results.processingDetails) {
+      doc.text(`Pages processed: ${results.processingDetails.pagesProcessed}/${results.processingDetails.totalPages}`, 20, 70);
+      doc.text(`Coverage: ${results.processingDetails.coverage}`, 20, 80);
+    }
+    
     doc.setFontSize(14);
-    doc.text('Summary:', 20, 80);
+    doc.text('Summary:', 20, 95);
     
     doc.setFontSize(10);
     const summaryLines = doc.splitTextToSize(results.summary, 170);
-    doc.text(summaryLines, 20, 95);
+    doc.text(summaryLines, 20, 110);
     
-    // フラッシュカードを追加
-    let yPosition = 95 + (summaryLines.length * 5) + 20;
+    let yPosition = 110 + (summaryLines.length * 5) + 20;
     
     doc.setFontSize(14);
     doc.text('Study Cards:', 20, yPosition);
@@ -517,7 +751,6 @@ export default function HomePage() {
     let csvContent = 'Front,Back\n';
     
     results.flashcards.forEach((card: any) => {
-      // CSVエスケープ処理
       const front = `"${card.front.replace(/"/g, '""')}"`;
       const back = `"${card.back.replace(/"/g, '""')}"`;
       csvContent += `${front},${back}\n`;
@@ -530,19 +763,76 @@ export default function HomePage() {
     link.click();
   };
 
-  // 使用状況の表示テキスト
+  const downloadHistoryPDF = async (item: any) => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Document Summary', 20, 30);
+    
+    doc.setFontSize(12);
+    doc.text(`File: ${item.file_name}`, 20, 50);
+    doc.text(`Processed: ${new Date(item.created_at).toLocaleDateString()}`, 20, 60);
+    
+    if (item.page_count && item.pages_processed) {
+      doc.text(`Pages: ${item.pages_processed}/${item.page_count}`, 20, 70);
+    }
+    
+    doc.setFontSize(14);
+    doc.text('Summary:', 20, 85);
+    
+    doc.setFontSize(10);
+    const summaryLines = doc.splitTextToSize(item.summary_text || '', 170);
+    doc.text(summaryLines, 20, 100);
+    
+    doc.save(`${item.file_name}_summary.pdf`);
+  };
+
+  const downloadHistoryCards = (item: any) => {
+    if (!item.flashcard_data || item.flashcard_data.length === 0) return;
+    
+    let csvContent = 'Front,Back\n';
+    
+    item.flashcard_data.forEach((card: any) => {
+      const front = `"${card.front.replace(/"/g, '""')}"`;
+      const back = `"${card.back.replace(/"/g, '""')}"`;
+      csvContent += `${front},${back}\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${item.file_name}_flashcards.csv`;
+    link.click();
+  };
+
+  // Usage display text
   const getUsageText = () => {
-    if (!isSignedIn) return 'Guests: 1 file/day';
+    if (!isSignedIn) return 'Free: 2 files/day, 100 pages/month';
     
     if (!userProfile) return 'Loading...';
     
-    if (userProfile.subscription_status === 'pro') {
-      const remaining = 100 - monthlyUsage.files_processed;
-      return `Pro: ${remaining} files left this month`;
-    }
+    const planDetails: { [key: string]: { files: string; pages: number } } = {
+      free: { files: '2/day', pages: 100 },
+      starter: { files: '30/month', pages: 500 },
+      pro: { files: '100/month', pages: 3000 },
+      enterprise: { files: 'Unlimited', pages: 10000 }
+    };
     
-    const remaining = 3 - dailyUsage.files_processed;
-    return `Free: ${remaining} files left today`;
+    const plan = planDetails[userProfile.subscription_status] || planDetails.free;
+    
+    if (userProfile.subscription_status === 'free') {
+      const filesRemaining = 2 - dailyUsage.files_processed;
+      return `Free: ${filesRemaining} files today, ${remainingPages || 0} pages this month`;
+    } else {
+      const filesRemaining = userProfile.subscription_status === 'pro' 
+        ? 100 - monthlyUsage.files_processed
+        : userProfile.subscription_status === 'starter'
+        ? 30 - monthlyUsage.files_processed
+        : 0;
+      
+      return `${userProfile.subscription_status.charAt(0).toUpperCase() + userProfile.subscription_status.slice(1)}: ${filesRemaining} files, ${remainingPages || 0} pages remaining`;
+    }
   };
 
   return (
@@ -558,6 +848,9 @@ export default function HomePage() {
               <div className="ml-10 flex items-baseline space-x-4">
                 <Link href="/how-it-works" className="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                   How it works
+                </Link>
+                <Link href="/pricing" className="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
+                  Pricing
                 </Link>
                 <Link href="/privacy" className="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium">
                   Privacy
@@ -613,6 +906,9 @@ export default function HomePage() {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t">
             <Link href="/how-it-works" className="text-gray-600 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
               How it works
+            </Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
+              Pricing
             </Link>
             <Link href="/privacy" className="text-gray-600 hover:text-indigo-600 block px-3 py-2 rounded-md text-base font-medium w-full text-left">
               Privacy
@@ -710,7 +1006,11 @@ export default function HomePage() {
                       Select your PDF or DOCX file
                     </p>
                     <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">
-                      Maximum file size: {userProfile?.subscription_status === 'pro' ? '100MB' : '50MB'}
+                      Maximum file size: {
+                        userProfile?.subscription_status === 'pro' ? '25MB' :
+                        userProfile?.subscription_status === 'starter' ? '15MB' :
+                        '10MB'
+                      }
                     </p>
                     <label className="bg-indigo-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer inline-block text-sm sm:text-base">
                       Browse Files
@@ -738,6 +1038,21 @@ export default function HomePage() {
               </div>
             )}
 
+            {/* NEW: Page limit warning */}
+            {remainingPages !== null && remainingPages < 50 && remainingPages > 0 && (
+              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start">
+                  <AlertTriangle className="text-yellow-600 mr-2 flex-shrink-0" size={18} />
+                  <div>
+                    <p className="text-yellow-800 text-sm font-medium">Low Page Balance</p>
+                    <p className="text-yellow-700 text-xs">
+                      You have {remainingPages} pages remaining this month. Large documents may be partially processed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="mt-4 sm:mt-6 text-xs sm:text-sm text-gray-500">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 sm:mb-4 space-y-2 sm:space-y-0">
                 <span className="text-center sm:text-left">
@@ -745,7 +1060,7 @@ export default function HomePage() {
                   {isSignedIn && <span className="text-green-600 ml-2">✓ Signed in</span>}
                   {isLoadingProfile && <span className="text-blue-600 ml-2">Loading...</span>}
                 </span>
-                <span className="text-center sm:text-right">🔄 Processing time: ~2 minutes</span>
+                <span className="text-center sm:text-right">⏱️ Processing time: ~1 minute</span>
               </div>
               
               {/* Process Button */}
@@ -762,7 +1077,7 @@ export default function HomePage() {
                   {isProcessing ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white mr-2"></div>
-                      <span className="text-sm sm:text-base">Processing...</span>
+                      <span className="text-sm sm:text-base">{processingStatus || 'Processing...'}</span>
                     </div>
                   ) : !canProcess() ? (
                     '🚫 Limit reached'
@@ -785,10 +1100,10 @@ export default function HomePage() {
                 {isSignedIn && userProfile?.subscription_status === 'free' && !canProcess() && (
                   <div className="mt-2">
                     <button 
-                      onClick={handleSubscribe}
+                      onClick={() => handleSubscribe('starter')}
                       className="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm underline"
                     >
-                      Upgrade to Pro for more processing!
+                      Upgrade to Starter for more processing!
                     </button>
                   </div>
                 )}
@@ -811,6 +1126,17 @@ export default function HomePage() {
                     <div className="text-sm text-gray-600 space-y-1">
                       <p><strong>File:</strong> {results.fileName}</p>
                       <p><strong>Text extracted:</strong> {results.originalLength?.toLocaleString()} characters</p>
+                      {results.processingDetails && (
+                        <>
+                          <p><strong>Pages:</strong> {results.processingDetails.pagesProcessed}/{results.processingDetails.totalPages}</p>
+                          <p><strong>Coverage:</strong> {results.processingDetails.coverage}</p>
+                          {results.processingDetails.partialProcessing && (
+                            <p className="text-yellow-600 text-xs mt-1">
+                              ⚠️ Partial processing due to page limits
+                            </p>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -1029,27 +1355,21 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* History Section - ログインユーザーのみ表示 */}
+        {/* History Section - For logged in users */}
         {isSignedIn && processingHistory.length > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
             <h3 className="text-2xl font-semibold text-gray-900 mb-6">
               📚 Recent Processing History
             </h3>
             <div className="space-y-4">
-              {processingHistory.slice(0, 5).map((item, index) => (
-                <div key={item.id} className="border-b pb-4 last:border-b-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-gray-800">{item.file_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(item.created_at).toLocaleDateString()} at {new Date(item.created_at).toLocaleTimeString()}
-                      </p>
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {(item.file_size / 1024 / 1024).toFixed(2)} MB
-                    </div>
-                  </div>
-                </div>
+              {processingHistory.slice(0, 5).map((item) => (
+                <HistoryItem 
+                  key={item.id}
+                  item={item}
+                  downloadHistoryPDF={downloadHistoryPDF}
+                  downloadHistoryCards={downloadHistoryCards}
+                  setResults={setResults}
+                />
               ))}
             </div>
           </div>
@@ -1063,7 +1383,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Lightning Fast</h3>
             <p className="text-gray-600">
-              Process academic papers in under 3 minutes with AI precision
+              Process academic papers in under 2 minutes with AI precision
             </p>
           </div>
 
@@ -1088,78 +1408,241 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Pricing Section */}
+        {/* Updated Pricing Section */}
         <div className="bg-white rounded-xl shadow-lg p-8 text-center mb-16">
           <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-            🚀 Upgrade to Pro
+            🚀 Choose Your Plan
           </h3>
           <p className="text-gray-600 mb-6">
             Get more processing power and advanced features
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
             {/* Free Plan */}
             <div className="border rounded-lg p-6">
-              <h4 className="text-lg font-semibold text-gray-800 mb-2">Free Plan</h4>
-              <div className="text-3xl font-bold text-gray-900 mb-4">$0<span className="text-sm text-gray-500">/month</span></div>
-              <ul className="text-sm text-gray-600 space-y-2 mb-6">
-                <li>✅ 3 files per day</li>
-                <li>✅ Basic summaries</li>
-                <li>✅ Study cards</li>
-                <li>✅ 7-day history</li>
-                <li>❌ Large files (50MB+)</li>
-                <li>❌ Priority processing</li>
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Free</h4>
+              <div className="text-3xl font-bold text-gray-900 mb-4">$0<span className="text-sm text-gray-500">/mo</span></div>
+              <ul className="text-xs text-gray-600 space-y-1 mb-4">
+                <li>✅ 2 files/day</li>
+                <li>✅ 100 pages/month</li>
+                <li>✅ 10MB files</li>
+                <li>✅ 8-12 cards</li>
               </ul>
               {(!isSignedIn || userProfile?.subscription_status === 'free') && (
-                <div className="text-gray-500 text-sm">Current Plan</div>
+                <div className="text-gray-500 text-sm">Current</div>
+              )}
+            </div>
+
+            {/* Starter Plan */}
+            <div className="border rounded-lg p-6 bg-blue-50">
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Starter</h4>
+              <div className="text-3xl font-bold text-blue-600 mb-4">$4.99<span className="text-sm text-gray-500">/mo</span></div>
+              <ul className="text-xs text-gray-600 space-y-1 mb-4">
+                <li>✅ 30 files/month</li>
+                <li>✅ 500 pages/month</li>
+                <li>✅ 15MB files</li>
+                <li>✅ 12-18 cards</li>
+              </ul>
+              {userProfile?.subscription_status === 'starter' ? (
+                <div className="text-green-600 text-sm font-medium">✓ Current</div>
+              ) : (
+                <button 
+                  onClick={() => handleSubscribe('starter')}
+                  className="w-full bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Upgrade
+                </button>
               )}
             </div>
 
             {/* Pro Plan */}
             <div className="border-2 border-indigo-500 rounded-lg p-6 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white px-4 py-1 rounded-full text-xs font-medium">
-                Recommended
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                Popular
               </div>
-              <h4 className="text-lg font-semibold text-gray-800 mb-2">Pro Plan</h4>
-              <div className="text-3xl font-bold text-indigo-600 mb-4">$9.99<span className="text-sm text-gray-500">/month</span></div>
-              <ul className="text-sm text-gray-600 space-y-2 mb-6">
-                <li>✅ 100 files per month</li>
-                <li>✅ Advanced summaries</li>
-                <li>✅ Unlimited study cards</li>
-                <li>✅ Unlimited history</li>
-                <li>✅ Large files (up to 100MB)</li>
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Pro</h4>
+              <div className="text-3xl font-bold text-indigo-600 mb-4">$14.99<span className="text-sm text-gray-500">/mo</span></div>
+              <ul className="text-xs text-gray-600 space-y-1 mb-4">
+                <li>✅ 100 files/month</li>
+                <li>✅ 3000 pages/month</li>
+                <li>✅ 25MB files</li>
+                <li>✅ 20-30 cards</li>
                 <li>✅ Priority processing</li>
-                <li>✅ Email support</li>
+                <li>✅ Advanced AI</li>
               </ul>
               {userProfile?.subscription_status === 'pro' ? (
-                <div className="text-green-600 text-sm font-medium">✓ Current Plan</div>
+                <div className="text-green-600 text-sm font-medium">✓ Current</div>
               ) : (
                 <button 
-                  onClick={handleSubscribe}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                  onClick={() => handleSubscribe('pro')}
+                  className="w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700 transition-colors font-medium"
                 >
                   Upgrade to Pro
                 </button>
               )}
             </div>
+{/* Enterprise Plan */}
+            <div className="border rounded-lg p-6 bg-gray-50">
+              <h4 className="text-lg font-semibold text-gray-800 mb-2">Enterprise</h4>
+              <div className="text-3xl font-bold text-gray-600 mb-4">$29.99<span className="text-sm text-gray-500">/mo</span></div>
+              <ul className="text-xs text-gray-600 space-y-1 mb-4">
+                <li>✅ Unlimited files</li>
+                <li>✅ 10,000 pages/mo</li>
+                <li>✅ 50MB files</li>
+                <li>✅ 30-40 cards</li>
+                <li>✅ API access</li>
+                <li>✅ Team features</li>
+              </ul>
+              <div className="text-gray-500 text-sm">Coming Soon</div>
+            </div>
+          </div>
+          
+          {/* View Full Pricing Link */}
+          <div className="mt-6">
+            <Link 
+              href="/pricing" 
+              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            >
+              View detailed pricing comparison →
+            </Link>
           </div>
         </div>
 
-{/* Feedback Section */}
-<div className="bg-white rounded-xl shadow-lg p-8 text-center">
-  <h3 className="text-2xl font-semibold text-gray-900 mb-4">
-    Help Us Improve
-  </h3>
-  <p className="text-gray-600 mb-6">
-    Your feedback helps us make ScholarSumm better for researchers worldwide
-  </p>
-  <Link 
-    href="/feedback" 
-    className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
-  >
-    💬 Send Feedback
-  </Link>
-</div>
+        {/* Usage Dashboard for Logged In Users */}
+        {isSignedIn && userProfile && (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-16">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900">
+                📊 Your Usage Dashboard
+              </h3>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                userProfile.subscription_status === 'pro' ? 'bg-indigo-100 text-indigo-800' :
+                userProfile.subscription_status === 'starter' ? 'bg-blue-100 text-blue-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {userProfile.subscription_status.charAt(0).toUpperCase() + userProfile.subscription_status.slice(1)} Plan
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Files Usage */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">Files Processed</span>
+                  <FileCheck className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {userProfile.subscription_status === 'free' 
+                    ? `${dailyUsage.files_processed}/2`
+                    : `${monthlyUsage.files_processed}/${
+                        userProfile.subscription_status === 'pro' ? '100' :
+                        userProfile.subscription_status === 'starter' ? '30' :
+                        '∞'
+                      }`
+                  }
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {userProfile.subscription_status === 'free' ? 'Daily limit' : 'Monthly limit'}
+                </div>
+              </div>
+              
+              {/* Pages Usage */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">Pages Processed</span>
+                  <FileText className="h-5 w-5 text-gray-400" />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {monthlyPages}/{
+                    userProfile.subscription_status === 'pro' ? '3000' :
+                    userProfile.subscription_status === 'starter' ? '500' :
+                    userProfile.subscription_status === 'enterprise' ? '10000' :
+                    '100'
+                  }
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {remainingPages} pages remaining
+                </div>
+                {/* Progress bar */}
+                <div className="mt-2 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      monthlyPages / (userProfile.subscription_status === 'pro' ? 3000 :
+                        userProfile.subscription_status === 'starter' ? 500 :
+                        userProfile.subscription_status === 'enterprise' ? 10000 : 100) > 0.8
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
+                    }`}
+                    style={{ 
+                      width: `${Math.min(100, (monthlyPages / (
+                        userProfile.subscription_status === 'pro' ? 3000 :
+                        userProfile.subscription_status === 'starter' ? 500 :
+                        userProfile.subscription_status === 'enterprise' ? 10000 : 100
+                      )) * 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Upgrade CTA or Status */}
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-indigo-50 to-purple-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-600">Plan Benefits</span>
+                  <TrendingUp className="h-5 w-5 text-indigo-600" />
+                </div>
+                {userProfile.subscription_status === 'free' ? (
+                  <>
+                    <p className="text-sm text-gray-700 mb-3">
+                      Upgrade for more files, pages, and advanced features
+                    </p>
+                    <button 
+                      onClick={() => handleSubscribe('starter')}
+                      className="w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700 transition-colors"
+                    >
+                      Upgrade Now
+                    </button>
+                  </>
+                ) : userProfile.subscription_status === 'starter' ? (
+                  <>
+                    <p className="text-sm text-gray-700 mb-3">
+                      Get 3x more pages and priority processing with Pro
+                    </p>
+                    <button 
+                      onClick={() => handleSubscribe('pro')}
+                      className="w-full bg-indigo-600 text-white py-2 rounded text-sm hover:bg-indigo-700 transition-colors"
+                    >
+                      Upgrade to Pro
+                    </button>
+                  </>
+                ) : (
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      ✓ Priority processing<br/>
+                      ✓ Advanced AI models<br/>
+                      ✓ Unlimited history
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Feedback Section */}
+        <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+          <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+            Help Us Improve
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Your feedback helps us make ScholarSumm better for researchers worldwide
+          </p>
+          <Link 
+            href="/feedback" 
+            className="inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            💬 Send Feedback
+          </Link>
+        </div>
       </main>
 
       {/* Footer */}
